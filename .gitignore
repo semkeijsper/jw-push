@@ -1,0 +1,8 @@
+node_modules
+dist
+.session
+.wwebjs_auth
+.wwebjs_cache
+
+.env
+run
