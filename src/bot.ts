@@ -30,14 +30,15 @@ export class JWBot {
         return await this.client.sendMessage(this.channel.id, media, { caption, sendSeen: false });
     }
 
-    async start(options?: { skipBaseline?: boolean }): Promise<void> {
-        if (options?.skipBaseline) {
-            console.log(`[${this.channel.id}] --force: skipping baseline, will send current content.`);
+    async start(options?: { forceResend?: boolean; baseline?: boolean }): Promise<void> {
+        if (options?.forceResend) {
+            this.state.reset();
+            console.log(`[${this.channel.id}] --force: resending all current content.`);
         }
-        else if (this.state.isEmpty()) {
+        else if (options?.baseline) {
             await this.establishBaseline();
         }
-        else {
+        else if (!this.state.isEmpty()) {
             console.log(`[${this.channel.id}] Resuming from saved state.`);
         }
 

@@ -66,6 +66,8 @@ export type ContentTypeMap = {
 
 export type ChannelConfig = {
     id: string;
+    name: string;
+    type: "production" | "development";
     language: string;
     locale: string;
     articleFeedUrl: string;

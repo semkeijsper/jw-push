@@ -59,6 +59,13 @@ export class BotState {
         this.persist();
     }
 
+    reset(): void {
+        this.pushedVideos.clear();
+        this.pushedAlerts.clear();
+        this.pushedArticles.clear();
+        this.univAlerts.clear();
+    }
+
     private setFor(type: ContentType): Set<string> {
         switch (type) {
             case ContentType.Video: return this.pushedVideos;
