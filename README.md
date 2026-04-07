@@ -1,21 +1,21 @@
 # JW Push
 
-A WhatsApp Channel bot that monitors [JW.ORG](https://www.jw.org) and automatically broadcasts new content to a WhatsApp Channel.
+A WhatsApp Channel bot that monitors [JW.ORG](https://www.jw.org) and automatically broadcasts new content to one or more WhatsApp Channels.
 
 ## Features
 
-- 📺 **Latest videos** — polls for new videos
-- 📖 **New articles** — polls the JW.ORG 'What's New?' RSS feed
-- 🔔 **Alerts & announcements** — polls for breaking news alerts every minute; supports in-place editing when a placeholder alert is replaced by its localized version
+- 🎬 **Latest videos** — polls for new videos with thumbnail image
+- 📜 **New articles** — polls the JW.ORG 'What's New?' RSS feed
+- 🔔 **Alerts & announcements** — polls for breaking news alerts; edits placeholder alerts in-place when the localized version arrives
 - 🔁 **Deduplication** — tracks sent GUIDs per content type across restarts so nothing is sent twice
-- 🗂️ **Persistent state** — saves state to `run/state.json`
-- 🌐 **Configurable language** — defaults to English (`E`)
+- 🗂️ **Persistent state** — saves state per channel to `run/`
+- 🌍 **Multi-channel & i18n** — run multiple channels simultaneously, each with their own language and locale
 
 ## Requirements
 
 - Node.js >= 24
 - pnpm
-- A WhatsApp account that owns or administers the target channel
+- A WhatsApp account that owns or administers all target channels
 
 ## Setup
 
@@ -26,15 +26,24 @@ A WhatsApp Channel bot that monitors [JW.ORG](https://www.jw.org) and automatica
    pnpm install
    ```
 
-2. **Create a `.env` file** based on `.env.example`
+2. **Create a `config.json`** based on `config.example.json`
    ```bash
-   cp .env.example .env
+   cp config.example.json config.json
    ```
-   Edit `.env` with your values:
-   ```env
-   CHANNEL_ID=your_channel_id@newsletter
-   LANGUAGE=E
-   ARTICLE_FEED_URL=https://www.jw.org/en/whats-new/rss/WhatsNewWebArticles/feed.xml
+   Edit `config.json` with your channel details:
+   ```json
+   {
+     "channels": [
+       {
+         "id": "your_channel_id@newsletter",
+         "type": "production",
+         "name": "English",
+         "langcode": "E",
+         "locale": "en",
+         "articleFeedUrl": "https://www.jw.org/en/whats-new/rss/WhatsNewWebArticles/feed.xml"
+       }
+     ]
+   }
    ```
 
 3. **Run the bot**
@@ -49,34 +58,57 @@ A WhatsApp Channel bot that monitors [JW.ORG](https://www.jw.org) and automatica
 # Start normally
 pnpm start
 
-# Skip the baseline check and immediately send all current content
+# Establish a silent baseline without sending anything (useful after losing state or migrating hosts)
+pnpm start --baseline
+
+# Force-resend all current content on development channels
 pnpm start --force
+
+# Run on Linux (Raspberry Pi / Ubuntu) where Chromium is at /usr/bin/chromium
+pnpm start --linux
 ```
 
-### `--force` flag
-By default, on the very first run the bot establishes a baseline of all existing content and does not send it — only content published *after* the bot starts will be broadcast. The `--force` flag bypasses this, which is useful for testing or filling a new channel.
+### Startup modes
 
-## Environment variables
-
-| Variable | Default | Description |
+| Mode | How | Behavior |
 |---|---|---|
-| `CHANNEL_ID` | — | WhatsApp Channel ID in the format `{id}@newsletter` |
-| `LANGUAGE` | `E` | JW.ORG language code |
-| `ARTICLE_FEED_URL` | RSS feed | URL of the JW.ORG 'What's New?' RSS feed |
+| **Normal — new channel** | No state file | Polls immediately and fills the channel with all current content |
+| **Normal — existing state** | State file present | Resumes from saved state, only sends new content |
+| **`--baseline`** | Flag, all channels | Silently marks all current content as already sent, then polls normally. Use when migrating to a new host or after losing the state file |
+| **`--force`** | Flag, `type: "development"` channels only | Clears in-memory state and resends all current content. Useful for testing message formatting |
+
+> `--force` is silently ignored on `type: "production"` channels.
+
+## Configuration
+
+`config.json` (git-ignored) holds all channel configuration. Use `config.example.json` as a starting point.
+
+### Channel fields
+
+| Field | Description |
+|---|---|
+| `id` | WhatsApp Channel ID in the format `{id}@newsletter` |
+| `type` | `"production"` or `"development"` |
+| `name` | Human-readable label shown in console output |
+| `langcode` | JW.ORG language code (e.g. `E` for English, `O` for Dutch) |
+| `locale` | Locale used in URLs and message formatting (e.g. `en`, `nl`) |
+| `articleFeedUrl` | URL of the JW.ORG 'What's New?' RSS feed for this language |
 
 ## Project structure
 
 ```
 src/
-  index.ts      — WhatsApp client setup, entry point
+  index.ts      — Entry point, WhatsApp client setup
   bot.ts        — Polling logic, deduplication, scheduling
   api.ts        — JW.ORG API and RSS feed fetching
-  format.ts     — Message formatting for each content type
+  format.ts     — Message formatting per content type
   state.ts      — Persistent state (sent GUIDs, alert tracking)
-  config.ts     — Environment variable loading
-  types.ts      — TypeScript interfaces for API responses
+  config.ts     — config.json loading
+  types.ts      — TypeScript types for API responses and channel config
+  i18n.ts       — Localized strings per locale
+  logger.ts     — Channel-prefixed logging utility
 run/
-  state.json    — Runtime state (git-ignored)
+  {channelId}.json  — Per-channel runtime state (git-ignored)
 ```
 
 ## Development
@@ -85,8 +117,11 @@ run/
 # Start with hot-reload (no build step required)
 pnpm dev
 
-# Send all current content immediately, skipping the baseline
+# Force-resend on development channels
 pnpm dev --force
+
+# Establish baseline without sending
+pnpm dev --baseline
 
 # Type-check without emitting
 pnpm build
@@ -97,7 +132,7 @@ pnpm lint
 
 The dev server uses [tsx](https://github.com/privatenumber/tsx) to run TypeScript directly. WhatsApp session data is stored in `.wwebjs_auth/` and persists between runs — delete this folder to force a new QR scan.
 
-State is stored in `run/state.json`. Delete this file to reset sent-item tracking (use `--force` on the next run to avoid flooding the channel with existing content).
+Per-channel state is stored in `run/{channelId}.json`. Delete a channel's state file to reset its sent-item tracking. On next start without `--baseline`, the channel will be filled with current content.
 
 ---
 

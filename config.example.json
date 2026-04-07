@@ -1,7 +1,7 @@
 {
   "channels": [
     {
-      "id": "123456789123456789@newsletter",
+      "id": "your_production_channel_id@newsletter",
       "type": "production",
       "name": "English",
       "langcode": "E",
@@ -9,7 +9,7 @@
       "articleFeedUrl": "https://www.jw.org/en/whats-new/rss/WhatsNewWebArticles/feed.xml"
     },
     {
-      "id": "123456789123456789@newsletter",
+      "id": "your_development_channel_id@newsletter",
       "type": "development",
       "name": "Nederlands",
       "langcode": "O",
