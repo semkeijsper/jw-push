@@ -3,7 +3,7 @@ import type { Client, Message } from "whatsapp-web.js";
 import { config } from "./config.js";
 import { fetchLatestVideos, fetchAlerts, fetchArticles, fetchCategoryName } from "./api.js";
 import { BotState } from "./state.js";
-import { ContentType } from "./types.js";
+import { ContentType, type Alert, type Video } from "./types.js";
 import { formatVideo, formatAlert, formatArticle, getVideoThumbnail } from "./format.js";
 
 const { MessageMedia } = Whatsapp;
@@ -84,6 +84,19 @@ export class JWBot {
         console.log("Baseline established. Starting polls...");
     }
 
+    private async sendVideo(video: Video, categoryName: string): Promise<void> {
+        const caption = formatVideo(video, categoryName);
+        const thumbnailUrl = getVideoThumbnail(video);
+        if (thumbnailUrl) {
+            try {
+                await this.sendWithImage(thumbnailUrl, caption);
+                return;
+            }
+            catch { /* fall through to text-only */ }
+        }
+        await this.send(caption);
+    }
+
     private async checkVideos(): Promise<void> {
         try {
             const data = await fetchLatestVideos();
@@ -97,25 +110,48 @@ export class JWBot {
                 }
 
                 const categoryName = await this.getCategoryName(video.primaryCategory);
-                const caption = formatVideo(video, categoryName);
-                const thumbnailUrl = getVideoThumbnail(video);
-                if (thumbnailUrl) {
-                    try {
-                        await this.sendWithImage(thumbnailUrl, caption);
-                    }
-                    catch {
-                        await this.send(caption);
-                    }
-                }
-                else {
-                    await this.send(caption);
-                }
+                await this.sendVideo(video, categoryName);
                 this.state.markPushed(ContentType.Video, video);
                 console.log(`Sent video: ${video.title}`);
             }
         }
         catch (e) {
             console.error("Error in checkVideos:", e);
+        }
+    }
+
+    private async handleAlert(alert: Alert): Promise<void> {
+        const existingMsgId = this.state.getUnivAlertMessageId(alert.guid);
+
+        if (existingMsgId && alert.languageCode !== "univ") {
+            // This is the localized version of a previously sent "univ" alert
+            const oldMessage = this.univAlertMessages.get(alert.guid);
+            const edited = oldMessage !== undefined
+                && await oldMessage.edit(formatAlert(alert)).catch(() => null) !== null;
+
+            if (!edited) {
+                // Edit window expired or message not in memory — delete and resend
+                if (oldMessage !== undefined) {
+                    await oldMessage.delete(true).catch(() => null);
+                }
+                await this.send(formatAlert(alert));
+            }
+            this.univAlertMessages.delete(alert.guid);
+            this.state.deleteUnivAlert(alert.guid);
+            console.log(`Updated alert ${alert.guid} (${edited ? "edited" : "replaced"})`);
+            return;
+        }
+
+        if (!this.state.hasPushed(ContentType.Alert, alert)) {
+            const msg = await this.send(formatAlert(alert));
+            this.state.markPushed(ContentType.Alert, alert);
+
+            if (alert.languageCode === "univ") {
+                this.univAlertMessages.set(alert.guid, msg);
+                this.state.setUnivAlert(alert.guid, msg.id._serialized);
+            }
+
+            console.log(`Sent alert ${alert.guid} (lang: ${alert.languageCode})`);
         }
     }
 
@@ -127,38 +163,7 @@ export class JWBot {
             }
 
             for (const alert of [...data.alerts].reverse()) {
-                const existingMsgId = this.state.getUnivAlertMessageId(alert.guid);
-
-                if (existingMsgId && alert.languageCode !== "univ") {
-                    // This is the localized version of a previously sent "univ" alert
-                    const oldMessage = this.univAlertMessages.get(alert.guid);
-                    const edited = oldMessage !== undefined
-                        && await oldMessage.edit(formatAlert(alert)).catch(() => null) !== null;
-
-                    if (!edited) {
-                        // Edit window expired or message not in memory — delete and resend
-                        if (oldMessage !== undefined) {
-                            await oldMessage.delete(true).catch(() => null);
-                        }
-                        await this.send(formatAlert(alert));
-                    }
-                    this.univAlertMessages.delete(alert.guid);
-                    this.state.deleteUnivAlert(alert.guid);
-                    console.log(`Updated alert ${alert.guid} (${edited ? "edited" : "replaced"})`);
-                    continue;
-                }
-
-                if (!this.state.hasPushed(ContentType.Alert, alert)) {
-                    const msg = await this.send(formatAlert(alert));
-                    this.state.markPushed(ContentType.Alert, alert);
-
-                    if (alert.languageCode === "univ") {
-                        this.univAlertMessages.set(alert.guid, msg);
-                        this.state.setUnivAlert(alert.guid, msg.id._serialized);
-                    }
-
-                    console.log(`Sent alert ${alert.guid} (lang: ${alert.languageCode})`);
-                }
+                await this.handleAlert(alert);
             }
         }
         catch (e) {
@@ -184,8 +189,9 @@ export class JWBot {
     }
 
     private async getCategoryName(key: string): Promise<string> {
-        if (this.categoryCache.has(key)) {
-            return this.categoryCache.get(key)!;
+        const cached = this.categoryCache.get(key);
+        if (cached !== undefined) {
+            return cached;
         }
         const name = await fetchCategoryName(key);
         this.categoryCache.set(key, name);
