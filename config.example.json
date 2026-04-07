@@ -2,17 +2,17 @@
   "channels": [
     {
       "id": "123456789123456789@newsletter",
-      "name": "EN",
       "type": "production",
-      "language": "E",
+      "name": "English",
+      "langcode": "E",
       "locale": "en",
       "articleFeedUrl": "https://www.jw.org/en/whats-new/rss/WhatsNewWebArticles/feed.xml"
     },
     {
       "id": "123456789123456789@newsletter",
-      "name": "NL",
       "type": "development",
-      "language": "O",
+      "name": "Nederlands",
+      "langcode": "O",
       "locale": "nl",
       "articleFeedUrl": "https://www.jw.org/nl/nieuw-op-jw-org/rss/WhatsNewWebArticles/feed.xml"
     }

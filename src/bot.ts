@@ -4,12 +4,14 @@ import { fetchLatestVideos, fetchAlerts, fetchArticles, fetchCategoryName } from
 import { BotState } from "./state.js";
 import { ContentType, type Alert, type Video, type ChannelConfig } from "./types.js";
 import { type Strings } from "./i18n.js";
+import { createLogger, type Logger } from "./logger.js";
 import { formatVideo, formatAlert, formatArticle, getVideoThumbnail } from "./format.js";
 
 const { MessageMedia } = Whatsapp;
 
 export class JWBot {
     private state: BotState;
+    private logger: Logger;
     private categoryCache = new Map<string, string>();
     private univAlertMessages = new Map<string, Message>(); // in-memory guid -> Message
 
@@ -19,6 +21,7 @@ export class JWBot {
         private strings: Strings,
     ) {
         this.state = new BotState(channel.id);
+        this.logger = createLogger(channel.name);
     }
 
     private async send(text: string): Promise<Message> {
@@ -33,13 +36,13 @@ export class JWBot {
     async start(options?: { forceResend?: boolean; baseline?: boolean }): Promise<void> {
         if (options?.forceResend) {
             this.state.reset();
-            console.log(`[${this.channel.id}] --force: resending all current content.`);
+            this.logger.log("--force: resending all current content.");
         }
         else if (options?.baseline) {
             await this.establishBaseline();
         }
         else if (!this.state.isEmpty()) {
-            console.log(`[${this.channel.id}] Resuming from saved state.`);
+            this.logger.log("Resuming from saved state.");
         }
 
         // Check videos immediately, then every minute
@@ -58,15 +61,15 @@ export class JWBot {
             setInterval(() => void this.checkAlerts(), 60_000);
         }, 30_000);
 
-        console.log(`[${this.channel.id}] Polling started.`);
+        this.logger.log("Polling started.");
     }
 
     private async establishBaseline(): Promise<void> {
-        console.log(`[${this.channel.id}] First run: establishing baseline...`);
+        this.logger.log("Establishing baseline...");
 
         const [videoData, alertData, articles] = await Promise.all([
-            fetchLatestVideos(this.channel.language),
-            fetchAlerts(this.channel.language),
+            fetchLatestVideos(this.channel.langcode),
+            fetchAlerts(this.channel.langcode),
             fetchArticles(this.channel.articleFeedUrl),
         ]);
 
@@ -86,7 +89,7 @@ export class JWBot {
             this.state.markPushed(ContentType.Article, article);
         }
 
-        console.log(`[${this.channel.id}] Baseline established. Starting polls...`);
+        this.logger.log("Baseline established.");
     }
 
     private async sendVideo(video: Video, categoryName: string): Promise<void> {
@@ -104,7 +107,7 @@ export class JWBot {
 
     private async checkVideos(): Promise<void> {
         try {
-            const data = await fetchLatestVideos(this.channel.language);
+            const data = await fetchLatestVideos(this.channel.langcode);
             if (!data?.category?.media) {
                 return;
             }
@@ -117,11 +120,11 @@ export class JWBot {
                 const categoryName = await this.getCategoryName(video.primaryCategory);
                 await this.sendVideo(video, categoryName);
                 this.state.markPushed(ContentType.Video, video);
-                console.log(`[${this.channel.id}] Sent video: ${video.title}`);
+                this.logger.log(`Sent video: ${video.title}`);
             }
         }
         catch (e) {
-            console.error(`[${this.channel.id}] Error in checkVideos:`, e);
+            this.logger.error("Error in checkVideos:", e);
         }
     }
 
@@ -143,7 +146,7 @@ export class JWBot {
             }
             this.univAlertMessages.delete(alert.guid);
             this.state.deleteUnivAlert(alert.guid);
-            console.log(`[${this.channel.id}] Updated alert ${alert.guid} (${edited ? "edited" : "replaced"})`);
+            this.logger.log(`Updated alert ${alert.guid} (${edited ? "edited" : "replaced"})`);
             return;
         }
 
@@ -156,13 +159,13 @@ export class JWBot {
                 this.state.setUnivAlert(alert.guid, msg.id._serialized);
             }
 
-            console.log(`[${this.channel.id}] Sent alert ${alert.guid} (lang: ${alert.languageCode})`);
+            this.logger.log(`Sent alert ${alert.guid} (lang: ${alert.languageCode})`);
         }
     }
 
     private async checkAlerts(): Promise<void> {
         try {
-            const data = await fetchAlerts(this.channel.language);
+            const data = await fetchAlerts(this.channel.langcode);
             if (!data?.alerts) {
                 return;
             }
@@ -172,7 +175,7 @@ export class JWBot {
             }
         }
         catch (e) {
-            console.error(`[${this.channel.id}] Error in checkAlerts:`, e);
+            this.logger.error("Error in checkAlerts:", e);
         }
     }
 
@@ -185,11 +188,11 @@ export class JWBot {
                 }
                 await this.send(formatArticle(article, this.strings));
                 this.state.markPushed(ContentType.Article, article);
-                console.log(`[${this.channel.id}] Sent article: ${article.title}`);
+                this.logger.log(`Sent article: ${article.title}`);
             }
         }
         catch (e) {
-            console.error(`[${this.channel.id}] Error in checkArticles:`, e);
+            this.logger.error("Error in checkArticles:", e);
         }
     }
 
@@ -198,7 +201,7 @@ export class JWBot {
         if (cached !== undefined) {
             return cached;
         }
-        const name = await fetchCategoryName(key, this.channel.language);
+        const name = await fetchCategoryName(key, this.channel.langcode);
         this.categoryCache.set(key, name);
         return name;
     }

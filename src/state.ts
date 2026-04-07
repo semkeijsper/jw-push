@@ -23,6 +23,7 @@ export class BotState {
     constructor(channelId: string) {
         this.stateFile = `${BotState.RUN_DIR}/${channelId}.json`;
         mkdirSync(BotState.RUN_DIR, { recursive: true });
+        
         const data = BotState.load(this.stateFile);
         this.pushedVideos = new Set(data.pushedVideos);
         this.pushedAlerts = new Set(data.pushedAlerts);

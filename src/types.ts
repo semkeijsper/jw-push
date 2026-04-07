@@ -1,3 +1,12 @@
+export type ChannelConfig = {
+    id: string;
+    type: "production" | "development";
+    name: string;
+    langcode: string;
+    locale: string;
+    articleFeedUrl: string;
+};
+
 export type CategoryInfoResponse = {
     category: Category;
 };
@@ -62,13 +71,4 @@ export type ContentTypeMap = {
     [ContentType.Video]: Video;
     [ContentType.Alert]: Alert;
     [ContentType.Article]: Article;
-};
-
-export type ChannelConfig = {
-    id: string;
-    name: string;
-    type: "production" | "development";
-    language: string;
-    locale: string;
-    articleFeedUrl: string;
 };

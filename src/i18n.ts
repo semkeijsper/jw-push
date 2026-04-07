@@ -17,7 +17,7 @@ const i18n: Record<string, Strings> = {
     },
 };
 
-const fallback: Strings = i18n["en"]!;
+const fallback: Strings = i18n.en;
 
 export function getStrings(locale: string): Strings {
     return i18n[locale] ?? fallback;

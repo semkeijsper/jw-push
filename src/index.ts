@@ -1,7 +1,7 @@
 import Whatsapp from "whatsapp-web.js";
 const { Client, LocalAuth } = Whatsapp;
-
 import qrcode from "qrcode-terminal";
+
 import { channels } from "./config.js";
 import { getStrings } from "./i18n.js";
 import { JWBot } from "./bot.js";
