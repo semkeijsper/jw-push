@@ -28,9 +28,11 @@ export class JWBot {
     async start(options?: { skipBaseline?: boolean }): Promise<void> {
         if (options?.skipBaseline) {
             console.log("--force: skipping baseline, will send current content.");
-        } else if (this.state.isEmpty()) {
+        }
+        else if (this.state.isEmpty()) {
             await this.establishBaseline();
-        } else {
+        }
+        else {
             console.log("Resuming from saved state.");
         }
 
@@ -99,16 +101,19 @@ export class JWBot {
                 if (thumbnailUrl) {
                     try {
                         await this.sendWithImage(thumbnailUrl, caption);
-                    } catch {
+                    }
+                    catch {
                         await this.send(caption);
                     }
-                } else {
+                }
+                else {
                     await this.send(caption);
                 }
                 this.state.markPushed(ContentType.Video, video.guid);
                 console.log(`Sent video: ${video.title}`);
             }
-        } catch (e) {
+        }
+        catch (e) {
             console.error("Error in checkVideos:", e);
         }
     }
@@ -154,7 +159,8 @@ export class JWBot {
                     console.log(`Sent alert ${alert.guid} (lang: ${alert.languageCode})`);
                 }
             }
-        } catch (e) {
+        }
+        catch (e) {
             console.error("Error in checkAlerts:", e);
         }
     }
@@ -170,7 +176,8 @@ export class JWBot {
                 this.state.markPushed(ContentType.Article, article.guid);
                 console.log(`Sent article: ${article.title}`);
             }
-        } catch (e) {
+        }
+        catch (e) {
             console.error("Error in checkArticles:", e);
         }
     }

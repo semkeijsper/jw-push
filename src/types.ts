@@ -1,14 +1,14 @@
 type ImageSizes = Partial<Record<"xl" | "lg" | "md" | "sm" | "xs", string>>;
 
-export interface Images {
+export type Images = {
     lss?: ImageSizes; // landscape standard
     lsr?: ImageSizes; // landscape retina (largest)
     pnr?: ImageSizes; // portrait narrow
     wss?: ImageSizes; // widescreen standard
     sqr?: ImageSizes; // square
-}
+};
 
-export interface Video {
+export type Video = {
     guid: string;
     naturalKey: string;
     languageAgnosticNaturalKey: string;
@@ -18,36 +18,36 @@ export interface Video {
     firstPublished?: string;
     durationFormattedHHMM?: string;
     images?: Images;
-}
+};
 
-export interface Category {
+export type Category = {
     key: string;
     name: string;
     media?: Video[];
-}
+};
 
-export interface LatestVideosResponse {
+export type LatestVideosResponse = {
     category: Category;
-}
+};
 
-export interface Alert {
+export type Alert = {
     guid: string;
     languageCode: string;
     title: string;
     body: string;
     type: string;
-}
+};
 
-export interface Article {
+export type Article = {
     guid: string;
     title: string;
     link: string;
-}
+};
 
-export interface AlertsInfoResponse {
+export type AlertsInfoResponse = {
     alerts: Alert[];
-}
+};
 
-export interface CategoryInfoResponse {
+export type CategoryInfoResponse = {
     category: Category;
-}
+};

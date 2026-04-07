@@ -3,19 +3,22 @@ import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig(
-  eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
-  {
-    languageOptions: {
-      parserOptions: {
-        project: "./tsconfig.eslint.json"
-      }
-    },
-    rules: {
-      semi: ["error", "always"],
-      quotes: ["error", "double"],
-      curly: ["error", "all"]
+    eslint.configs.recommended,
+    ...tseslint.configs.recommendedTypeChecked,
+    ...tseslint.configs.stylisticTypeChecked,
+    {
+        languageOptions: {
+            parserOptions: {
+                project: "./tsconfig.eslint.json"
+            }
+        },
+        rules: {
+            semi: ["error", "always"],
+            quotes: ["error", "double"],
+            curly: ["error", "all"],
+            "brace-style": ["error", "stroustrup"],
+            indent: ["error", 4, { SwitchCase: 1 }],
+            "@typescript-eslint/consistent-type-definitions": ["error", "type"]
+        }
     }
-  }
 );

@@ -13,7 +13,7 @@ export enum ContentType {
     Article = "article",
 }
 
-interface StateData {
+type StateData = {
     pushedVideos: string[];
     pushedAlerts: string[];
     pushedArticles: string[];
@@ -30,7 +30,8 @@ function load(): StateData {
     }
     try {
         return JSON.parse(readFileSync(STATE_FILE, "utf-8")) as StateData;
-    } catch {
+    }
+    catch {
         return emptyState();
     }
 }

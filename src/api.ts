@@ -19,7 +19,8 @@ async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 5
                 return "";
             }
             return await res.text();
-        } catch {
+        }
+        catch {
             if (attempt < maxRetries) {
                 await new Promise(r => setTimeout(r, 500));
                 continue;
@@ -66,7 +67,8 @@ export async function fetchArticles(): Promise<Article[]> {
                 title: item.title!,
                 link: item.link!,
             }));
-    } catch {
+    }
+    catch {
         return [];
     }
 }
