@@ -1,6 +1,4 @@
 import Parser from "rss-parser";
-
-import { config } from "./config.js";
 import type { LatestVideosResponse, AlertsInfoResponse, CategoryInfoResponse, Article } from "./types.js";
 
 const BASE_URL = "https://data.jw-api.org";
@@ -36,8 +34,8 @@ async function fetchJwt(): Promise<string> {
     return text.trim();
 }
 
-export async function fetchLatestVideos(): Promise<LatestVideosResponse | null> {
-    const url = `${BASE_URL}/mediator/v1/categories/${config.language}/LatestVideos?detailed=1&clientType=www`;
+export async function fetchLatestVideos(language: string): Promise<LatestVideosResponse | null> {
+    const url = `${BASE_URL}/mediator/v1/categories/${language}/LatestVideos?detailed=1&clientType=www`;
     const text = await fetchWithRetry(url);
     if (!text) {
         return null;
@@ -45,9 +43,9 @@ export async function fetchLatestVideos(): Promise<LatestVideosResponse | null> 
     return JSON.parse(text) as LatestVideosResponse;
 }
 
-export async function fetchAlerts(): Promise<AlertsInfoResponse | null> {
+export async function fetchAlerts(language: string): Promise<AlertsInfoResponse | null> {
     const token = await fetchJwt();
-    const url = `${BASE_URL}/alerts/list?type=news&lang=${config.language}`;
+    const url = `${BASE_URL}/alerts/list?type=news&lang=${language}`;
     const text = await fetchWithRetry(url, {
         headers: { "Authorization": `Bearer ${token}` },
     });
@@ -57,9 +55,9 @@ export async function fetchAlerts(): Promise<AlertsInfoResponse | null> {
     return JSON.parse(text) as AlertsInfoResponse;
 }
 
-export async function fetchArticles(): Promise<Article[]> {
+export async function fetchArticles(feedUrl: string): Promise<Article[]> {
     try {
-        const feed = await rssParser.parseURL(config.articleFeedUrl);
+        const feed = await rssParser.parseURL(feedUrl);
         return feed.items
             .filter(item => item.guid && item.title && item.link)
             .map(item => ({
@@ -73,8 +71,8 @@ export async function fetchArticles(): Promise<Article[]> {
     }
 }
 
-export async function fetchCategoryName(categoryKey: string): Promise<string> {
-    const url = `${BASE_URL}/mediator/v1/categories/${config.language}/${categoryKey}?limit=1`;
+export async function fetchCategoryName(categoryKey: string, language: string): Promise<string> {
+    const url = `${BASE_URL}/mediator/v1/categories/${language}/${categoryKey}?limit=1`;
     const text = await fetchWithRetry(url);
     if (!text) {
         return categoryKey;

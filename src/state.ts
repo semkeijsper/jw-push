@@ -1,6 +1,8 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { ContentType, type ContentTypeMap } from "./types.js";
 
+export { ContentType };
+
 type StateData = {
     pushedVideos: string[];
     pushedAlerts: string[];
@@ -10,17 +12,18 @@ type StateData = {
 
 export class BotState {
     private static readonly RUN_DIR = "run";
-    private static readonly STATE_FILE = `${this.RUN_DIR}/state.json`;
     private static readonly MAX_PUSHED = 500;
 
+    private readonly stateFile: string;
     private pushedVideos: Set<string>;
     private pushedAlerts: Set<string>;
     private pushedArticles: Set<string>;
     private univAlerts: Map<string, string>;
 
-    constructor() {
+    constructor(channelId: string) {
+        this.stateFile = `${BotState.RUN_DIR}/${channelId}.json`;
         mkdirSync(BotState.RUN_DIR, { recursive: true });
-        const data = BotState.load();
+        const data = BotState.load(this.stateFile);
         this.pushedVideos = new Set(data.pushedVideos);
         this.pushedAlerts = new Set(data.pushedAlerts);
         this.pushedArticles = new Set(data.pushedArticles);
@@ -65,7 +68,7 @@ export class BotState {
     }
 
     private persist(): void {
-        BotState.save({
+        BotState.save(this.stateFile, {
             pushedVideos: [...this.pushedVideos],
             pushedAlerts: [...this.pushedAlerts],
             pushedArticles: [...this.pushedArticles],
@@ -77,19 +80,19 @@ export class BotState {
         return { pushedVideos: [], pushedAlerts: [], pushedArticles: [], univAlerts: {} };
     }
 
-    private static load(): StateData {
-        if (!existsSync(BotState.STATE_FILE)) {
+    private static load(stateFile: string): StateData {
+        if (!existsSync(stateFile)) {
             return BotState.emptyState();
         }
         try {
-            return JSON.parse(readFileSync(BotState.STATE_FILE, "utf-8")) as StateData;
+            return JSON.parse(readFileSync(stateFile, "utf-8")) as StateData;
         }
         catch {
             return BotState.emptyState();
         }
     }
 
-    private static save(state: StateData): void {
+    private static save(stateFile: string, state: StateData): void {
         // Keep only the most recent GUIDs per type to prevent unbounded file growth
         const trimmed: StateData = {
             pushedVideos: state.pushedVideos.slice(-BotState.MAX_PUSHED),
@@ -97,6 +100,6 @@ export class BotState {
             pushedArticles: state.pushedArticles.slice(-BotState.MAX_PUSHED),
             univAlerts: state.univAlerts,
         };
-        writeFileSync(BotState.STATE_FILE, JSON.stringify(trimmed, null, 2));
+        writeFileSync(stateFile, JSON.stringify(trimmed, null, 2));
     }
 }

@@ -1,9 +1,9 @@
 import Whatsapp from "whatsapp-web.js";
 import type { Client, Message } from "whatsapp-web.js";
-import { config } from "./config.js";
 import { fetchLatestVideos, fetchAlerts, fetchArticles, fetchCategoryName } from "./api.js";
 import { BotState } from "./state.js";
-import { ContentType, type Alert, type Video } from "./types.js";
+import { ContentType, type Alert, type Video, type ChannelConfig } from "./types.js";
+import { type Strings } from "./i18n.js";
 import { formatVideo, formatAlert, formatArticle, getVideoThumbnail } from "./format.js";
 
 const { MessageMedia } = Whatsapp;
@@ -13,28 +13,32 @@ export class JWBot {
     private categoryCache = new Map<string, string>();
     private univAlertMessages = new Map<string, Message>(); // in-memory guid -> Message
 
-    constructor(private client: Client) {
-        this.state = new BotState();
+    constructor(
+        private client: Client,
+        private channel: ChannelConfig,
+        private strings: Strings,
+    ) {
+        this.state = new BotState(channel.id);
     }
 
     private async send(text: string): Promise<Message> {
-        return await this.client.sendMessage(config.channelId, text, { sendSeen: false });
+        return await this.client.sendMessage(this.channel.id, text, { sendSeen: false });
     }
 
     private async sendWithImage(imageUrl: string, caption: string): Promise<Message> {
         const media = await MessageMedia.fromUrl(imageUrl, { unsafeMime: true });
-        return await this.client.sendMessage(config.channelId, media, { caption, sendSeen: false });
+        return await this.client.sendMessage(this.channel.id, media, { caption, sendSeen: false });
     }
 
     async start(options?: { skipBaseline?: boolean }): Promise<void> {
         if (options?.skipBaseline) {
-            console.log("--force: skipping baseline, will send current content.");
+            console.log(`[${this.channel.id}] --force: skipping baseline, will send current content.`);
         }
         else if (this.state.isEmpty()) {
             await this.establishBaseline();
         }
         else {
-            console.log("Resuming from saved state.");
+            console.log(`[${this.channel.id}] Resuming from saved state.`);
         }
 
         // Check videos immediately, then every minute
@@ -53,16 +57,16 @@ export class JWBot {
             setInterval(() => void this.checkAlerts(), 60_000);
         }, 30_000);
 
-        console.log("Polling started.");
+        console.log(`[${this.channel.id}] Polling started.`);
     }
 
     private async establishBaseline(): Promise<void> {
-        console.log("First run: establishing baseline...");
+        console.log(`[${this.channel.id}] First run: establishing baseline...`);
 
         const [videoData, alertData, articles] = await Promise.all([
-            fetchLatestVideos(),
-            fetchAlerts(),
-            fetchArticles(),
+            fetchLatestVideos(this.channel.language),
+            fetchAlerts(this.channel.language),
+            fetchArticles(this.channel.articleFeedUrl),
         ]);
 
         if (videoData?.category?.media) {
@@ -81,11 +85,11 @@ export class JWBot {
             this.state.markPushed(ContentType.Article, article);
         }
 
-        console.log("Baseline established. Starting polls...");
+        console.log(`[${this.channel.id}] Baseline established. Starting polls...`);
     }
 
     private async sendVideo(video: Video, categoryName: string): Promise<void> {
-        const caption = formatVideo(video, categoryName);
+        const caption = formatVideo(video, categoryName, this.strings, this.channel.locale);
         const thumbnailUrl = getVideoThumbnail(video);
         if (thumbnailUrl) {
             try {
@@ -99,7 +103,7 @@ export class JWBot {
 
     private async checkVideos(): Promise<void> {
         try {
-            const data = await fetchLatestVideos();
+            const data = await fetchLatestVideos(this.channel.language);
             if (!data?.category?.media) {
                 return;
             }
@@ -112,11 +116,11 @@ export class JWBot {
                 const categoryName = await this.getCategoryName(video.primaryCategory);
                 await this.sendVideo(video, categoryName);
                 this.state.markPushed(ContentType.Video, video);
-                console.log(`Sent video: ${video.title}`);
+                console.log(`[${this.channel.id}] Sent video: ${video.title}`);
             }
         }
         catch (e) {
-            console.error("Error in checkVideos:", e);
+            console.error(`[${this.channel.id}] Error in checkVideos:`, e);
         }
     }
 
@@ -127,23 +131,23 @@ export class JWBot {
             // This is the localized version of a previously sent "univ" alert
             const oldMessage = this.univAlertMessages.get(alert.guid);
             const edited = oldMessage !== undefined
-                && await oldMessage.edit(formatAlert(alert)).catch(() => null) !== null;
+                && await oldMessage.edit(formatAlert(alert, this.strings)).catch(() => null) !== null;
 
             if (!edited) {
                 // Edit window expired or message not in memory — delete and resend
                 if (oldMessage !== undefined) {
                     await oldMessage.delete(true).catch(() => null);
                 }
-                await this.send(formatAlert(alert));
+                await this.send(formatAlert(alert, this.strings));
             }
             this.univAlertMessages.delete(alert.guid);
             this.state.deleteUnivAlert(alert.guid);
-            console.log(`Updated alert ${alert.guid} (${edited ? "edited" : "replaced"})`);
+            console.log(`[${this.channel.id}] Updated alert ${alert.guid} (${edited ? "edited" : "replaced"})`);
             return;
         }
 
         if (!this.state.hasPushed(ContentType.Alert, alert)) {
-            const msg = await this.send(formatAlert(alert));
+            const msg = await this.send(formatAlert(alert, this.strings));
             this.state.markPushed(ContentType.Alert, alert);
 
             if (alert.languageCode === "univ") {
@@ -151,13 +155,13 @@ export class JWBot {
                 this.state.setUnivAlert(alert.guid, msg.id._serialized);
             }
 
-            console.log(`Sent alert ${alert.guid} (lang: ${alert.languageCode})`);
+            console.log(`[${this.channel.id}] Sent alert ${alert.guid} (lang: ${alert.languageCode})`);
         }
     }
 
     private async checkAlerts(): Promise<void> {
         try {
-            const data = await fetchAlerts();
+            const data = await fetchAlerts(this.channel.language);
             if (!data?.alerts) {
                 return;
             }
@@ -167,24 +171,24 @@ export class JWBot {
             }
         }
         catch (e) {
-            console.error("Error in checkAlerts:", e);
+            console.error(`[${this.channel.id}] Error in checkAlerts:`, e);
         }
     }
 
     private async checkArticles(): Promise<void> {
         try {
-            const articles = await fetchArticles();
+            const articles = await fetchArticles(this.channel.articleFeedUrl);
             for (const article of [...articles].reverse()) {
                 if (this.state.hasPushed(ContentType.Article, article)) {
                     continue;
                 }
-                await this.send(formatArticle(article));
+                await this.send(formatArticle(article, this.strings));
                 this.state.markPushed(ContentType.Article, article);
-                console.log(`Sent article: ${article.title}`);
+                console.log(`[${this.channel.id}] Sent article: ${article.title}`);
             }
         }
         catch (e) {
-            console.error("Error in checkArticles:", e);
+            console.error(`[${this.channel.id}] Error in checkArticles:`, e);
         }
     }
 
@@ -193,7 +197,7 @@ export class JWBot {
         if (cached !== undefined) {
             return cached;
         }
-        const name = await fetchCategoryName(key);
+        const name = await fetchCategoryName(key, this.channel.language);
         this.categoryCache.set(key, name);
         return name;
     }

@@ -1,5 +1,5 @@
 import type { Video, Alert, Article } from "./types.js";
-import { config } from "./config.js";
+import type { Strings } from "./i18n.js";
 
 function htmlToWhatsApp(html: string): string {
     return html
@@ -26,19 +26,18 @@ export function getVideoThumbnail(video: Video): string | undefined {
     return lsr?.xl ?? lss?.lg ?? wss?.lg ?? sqr?.lg;
 }
 
-export function formatVideo(video: Video, categoryName: string): string {
-    const url = `https://www.jw.org/finder?locale=${config.locale}&lank=${video.languageAgnosticNaturalKey}`;
+export function formatVideo(video: Video, categoryName: string, strings: Strings, locale: string): string {
+    const url = `https://www.jw.org/finder?locale=${locale}&lank=${video.languageAgnosticNaturalKey}`;
     const duration = video.durationFormattedHHMM ? ` (${video.durationFormattedHHMM})` : "";
-    return `🎬 _Nieuwe video!${duration}_\n\n*${categoryName.toLocaleUpperCase()}* | ${video.title}\n\n${url}`;
+    return `🎬 _${strings.newVideo}${duration}_\n\n*${categoryName.toLocaleUpperCase(locale)}* | ${video.title}\n\n${url}`;
 }
 
-export function formatArticle(article: Article): string {
-    return `📜 _Nieuw artikel!_\n\n${boldBeforePipe(article.title)}\n\n${article.link}`;
+export function formatArticle(article: Article, strings: Strings): string {
+    return `📜 _${strings.newArticle}_\n\n${boldBeforePipe(article.title)}\n\n${article.link}`;
 }
 
-export function formatAlert(alert: Alert): string {
+export function formatAlert(alert: Alert, strings: Strings): string {
     const title = htmlToWhatsApp(alert.title);
     const body = htmlToWhatsApp(alert.body);
-    const footer = `_>> Meer informatie op jw.org/${config.locale} <<_`;
-    return `🔔 ${boldBeforePipe(title)}\n\n${body}\n\n${footer}`;
+    return `🔔 ${boldBeforePipe(title)}\n\n${body}\n\n_${strings.moreInfo}_`;
 }

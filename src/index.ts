@@ -2,6 +2,8 @@ import Whatsapp from "whatsapp-web.js";
 const { Client, LocalAuth } = Whatsapp;
 
 import qrcode from "qrcode-terminal";
+import { channels } from "./config.js";
+import { getStrings } from "./i18n.js";
 import { JWBot } from "./bot.js";
 
 const args = new Set(process.argv);
@@ -21,8 +23,11 @@ const skipBaseline = args.has("--force");
 
 client.on("ready", () => {
     console.log("WhatsApp client ready.");
-    const bot = new JWBot(client);
-    void bot.start({ skipBaseline });
+    for (const channel of channels) {
+        const strings = getStrings(channel.locale);
+        const bot = new JWBot(client, channel, strings);
+        void bot.start({ skipBaseline });
+    }
 });
 
 await client.initialize();

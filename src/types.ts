@@ -63,3 +63,10 @@ export type ContentTypeMap = {
     [ContentType.Alert]: Alert;
     [ContentType.Article]: Article;
 };
+
+export type ChannelConfig = {
+    id: string;
+    language: string;
+    locale: string;
+    articleFeedUrl: string;
+};

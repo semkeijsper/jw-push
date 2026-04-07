@@ -5,4 +5,5 @@ dist
 .wwebjs_cache
 
 .env
+config.json
 run
