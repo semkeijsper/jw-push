@@ -2,7 +2,8 @@ import Whatsapp from "whatsapp-web.js";
 import type { Client, Message } from "whatsapp-web.js";
 import { config } from "./config.js";
 import { fetchLatestVideos, fetchAlerts, fetchArticles, fetchCategoryName } from "./api.js";
-import { BotState, ContentType } from "./state.js";
+import { BotState } from "./state.js";
+import { ContentType } from "./types.js";
 import { formatVideo, formatAlert, formatArticle, getVideoThumbnail } from "./format.js";
 
 const { MessageMedia } = Whatsapp;
@@ -66,18 +67,18 @@ export class JWBot {
 
         if (videoData?.category?.media) {
             for (const video of videoData.category.media) {
-                this.state.markPushed(ContentType.Video, video.guid);
+                this.state.markPushed(ContentType.Video, video);
             }
         }
 
         if (alertData?.alerts) {
             for (const alert of alertData.alerts) {
-                this.state.markPushed(ContentType.Alert, alert.guid);
+                this.state.markPushed(ContentType.Alert, alert);
             }
         }
 
         for (const article of articles) {
-            this.state.markPushed(ContentType.Article, article.guid);
+            this.state.markPushed(ContentType.Article, article);
         }
 
         console.log("Baseline established. Starting polls...");
@@ -91,7 +92,7 @@ export class JWBot {
             }
 
             for (const video of [...data.category.media].reverse()) {
-                if (this.state.hasPushed(ContentType.Video, video.guid)) {
+                if (this.state.hasPushed(ContentType.Video, video)) {
                     continue;
                 }
 
@@ -109,7 +110,7 @@ export class JWBot {
                 else {
                     await this.send(caption);
                 }
-                this.state.markPushed(ContentType.Video, video.guid);
+                this.state.markPushed(ContentType.Video, video);
                 console.log(`Sent video: ${video.title}`);
             }
         }
@@ -147,9 +148,9 @@ export class JWBot {
                     continue;
                 }
 
-                if (!this.state.hasPushed(ContentType.Alert, alert.guid)) {
+                if (!this.state.hasPushed(ContentType.Alert, alert)) {
                     const msg = await this.send(formatAlert(alert));
-                    this.state.markPushed(ContentType.Alert, alert.guid);
+                    this.state.markPushed(ContentType.Alert, alert);
 
                     if (alert.languageCode === "univ") {
                         this.univAlertMessages.set(alert.guid, msg);
@@ -169,11 +170,11 @@ export class JWBot {
         try {
             const articles = await fetchArticles();
             for (const article of [...articles].reverse()) {
-                if (this.state.hasPushed(ContentType.Article, article.guid)) {
+                if (this.state.hasPushed(ContentType.Article, article)) {
                     continue;
                 }
                 await this.send(formatArticle(article));
-                this.state.markPushed(ContentType.Article, article.guid);
+                this.state.markPushed(ContentType.Article, article);
                 console.log(`Sent article: ${article.title}`);
             }
         }

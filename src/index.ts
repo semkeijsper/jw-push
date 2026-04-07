@@ -4,15 +4,20 @@ const { Client, LocalAuth } = Whatsapp;
 import qrcode from "qrcode-terminal";
 import { JWBot } from "./bot.js";
 
+const args = new Set(process.argv);
+
 const client = new Client({
     authStrategy: new LocalAuth(),
+    puppeteer: {
+        executablePath: args.has("--linux") ? "/usr/bin/chromium" : undefined,
+    },
 });
 
 client.on("qr", (qr) => {
     qrcode.generate(qr, { small: true });
 });
 
-const skipBaseline = process.argv.includes("--force");
+const skipBaseline = args.has("--force");
 
 client.on("ready", () => {
     console.log("WhatsApp client ready.");

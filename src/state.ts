@@ -1,17 +1,5 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-
-const RUN_DIR = "run";
-const STATE_FILE = `${RUN_DIR}/state.json`;
-
-mkdirSync(RUN_DIR, { recursive: true });
-
-const MAX_PUSHED = 500;
-
-export enum ContentType {
-    Video = "video",
-    Alert = "alert",
-    Article = "article",
-}
+import { ContentType, type ContentTypeMap } from "./types.js";
 
 type StateData = {
     pushedVideos: string[];
@@ -20,44 +8,19 @@ type StateData = {
     univAlerts: Record<string, string>; // guid -> WhatsApp message ID
 }
 
-function emptyState(): StateData {
-    return { pushedVideos: [], pushedAlerts: [], pushedArticles: [], univAlerts: {} };
-}
-
-function load(): StateData {
-    if (!existsSync(STATE_FILE)) {
-        return emptyState();
-    }
-    try {
-        return JSON.parse(readFileSync(STATE_FILE, "utf-8")) as StateData;
-    }
-    catch {
-        return emptyState();
-    }
-}
-
-function save(state: StateData): void {
-    // Keep only the most recent GUIDs per type to prevent unbounded file growth
-    if (state.pushedVideos.length > MAX_PUSHED) {
-        state.pushedVideos = state.pushedVideos.slice(-MAX_PUSHED);
-    }
-    if (state.pushedAlerts.length > MAX_PUSHED) {
-        state.pushedAlerts = state.pushedAlerts.slice(-MAX_PUSHED);
-    }
-    if (state.pushedArticles.length > MAX_PUSHED) {
-        state.pushedArticles = state.pushedArticles.slice(-MAX_PUSHED);
-    }
-    writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
 export class BotState {
+    private static readonly RUN_DIR = "run";
+    private static readonly STATE_FILE = `${this.RUN_DIR}/state.json`;
+    private static readonly MAX_PUSHED = 500;
+
     private pushedVideos: Set<string>;
     private pushedAlerts: Set<string>;
     private pushedArticles: Set<string>;
     private univAlerts: Map<string, string>;
 
     constructor() {
-        const data = load();
+        mkdirSync(BotState.RUN_DIR, { recursive: true });
+        const data = BotState.load();
         this.pushedVideos = new Set(data.pushedVideos);
         this.pushedAlerts = new Set(data.pushedAlerts);
         this.pushedArticles = new Set(data.pushedArticles);
@@ -70,12 +33,12 @@ export class BotState {
             && this.pushedArticles.size === 0;
     }
 
-    hasPushed(type: ContentType, guid: string): boolean {
-        return this.setFor(type).has(guid);
+    hasPushed<T extends ContentType>(type: T, item: ContentTypeMap[T]): boolean {
+        return this.setFor(type).has(item.guid);
     }
 
-    markPushed(type: ContentType, guid: string): void {
-        this.setFor(type).add(guid);
+    markPushed<T extends ContentType>(type: T, item: ContentTypeMap[T]): void {
+        this.setFor(type).add(item.guid);
         this.persist();
     }
 
@@ -102,11 +65,38 @@ export class BotState {
     }
 
     private persist(): void {
-        save({
+        BotState.save({
             pushedVideos: [...this.pushedVideos],
             pushedAlerts: [...this.pushedAlerts],
             pushedArticles: [...this.pushedArticles],
             univAlerts: Object.fromEntries(this.univAlerts),
         });
+    }
+
+    private static emptyState(): StateData {
+        return { pushedVideos: [], pushedAlerts: [], pushedArticles: [], univAlerts: {} };
+    }
+
+    private static load(): StateData {
+        if (!existsSync(BotState.STATE_FILE)) {
+            return BotState.emptyState();
+        }
+        try {
+            return JSON.parse(readFileSync(BotState.STATE_FILE, "utf-8")) as StateData;
+        }
+        catch {
+            return BotState.emptyState();
+        }
+    }
+
+    private static save(state: StateData): void {
+        // Keep only the most recent GUIDs per type to prevent unbounded file growth
+        const trimmed: StateData = {
+            pushedVideos: state.pushedVideos.slice(-BotState.MAX_PUSHED),
+            pushedAlerts: state.pushedAlerts.slice(-BotState.MAX_PUSHED),
+            pushedArticles: state.pushedArticles.slice(-BotState.MAX_PUSHED),
+            univAlerts: state.univAlerts,
+        };
+        writeFileSync(BotState.STATE_FILE, JSON.stringify(trimmed, null, 2));
     }
 }

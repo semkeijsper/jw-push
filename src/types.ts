@@ -1,11 +1,15 @@
-type ImageSizes = Partial<Record<"xl" | "lg" | "md" | "sm" | "xs", string>>;
+export type CategoryInfoResponse = {
+    category: Category;
+};
 
-export type Images = {
-    lss?: ImageSizes; // landscape standard
-    lsr?: ImageSizes; // landscape retina (largest)
-    pnr?: ImageSizes; // portrait narrow
-    wss?: ImageSizes; // widescreen standard
-    sqr?: ImageSizes; // square
+export type LatestVideosResponse = {
+    category: Category;
+};
+
+export type Category = {
+    key: string;
+    name: string;
+    media?: Video[];
 };
 
 export type Video = {
@@ -20,14 +24,18 @@ export type Video = {
     images?: Images;
 };
 
-export type Category = {
-    key: string;
-    name: string;
-    media?: Video[];
+type ImageSizes = Partial<Record<"xl" | "lg" | "md" | "sm" | "xs", string>>;
+
+export type Images = {
+    lss?: ImageSizes; // landscape standard
+    lsr?: ImageSizes; // landscape retina (largest)
+    pnr?: ImageSizes; // portrait narrow
+    wss?: ImageSizes; // widescreen standard
+    sqr?: ImageSizes; // square
 };
 
-export type LatestVideosResponse = {
-    category: Category;
+export type AlertsInfoResponse = {
+    alerts: Alert[];
 };
 
 export type Alert = {
@@ -44,10 +52,14 @@ export type Article = {
     link: string;
 };
 
-export type AlertsInfoResponse = {
-    alerts: Alert[];
-};
+export enum ContentType {
+    Video = "video",
+    Alert = "alert",
+    Article = "article",
+}
 
-export type CategoryInfoResponse = {
-    category: Category;
+export type ContentTypeMap = {
+    [ContentType.Video]: Video;
+    [ContentType.Alert]: Alert;
+    [ContentType.Article]: Article;
 };
