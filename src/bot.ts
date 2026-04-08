@@ -2,10 +2,10 @@ import Whatsapp from "whatsapp-web.js";
 import type { Client, Message } from "whatsapp-web.js";
 import { fetchLatestVideos, fetchAlerts, fetchArticles, fetchCategoryName } from "./api.js";
 import { BotState } from "./state.js";
-import { ContentType, type Alert, type Video, type ChannelConfig } from "./types.js";
+import { ContentType, type Alert, type Video, type Article, type ChannelConfig } from "./types.js";
 import { type Strings } from "./i18n.js";
 import { createLogger, type Logger } from "./logger.js";
-import { formatVideo, formatAlert, formatArticle, getVideoThumbnail } from "./format.js";
+import { formatVideo, formatAlert, formatArticle, getVideoThumbnail, getArticleThumbnail } from "./format.js";
 
 const { MessageMedia } = Whatsapp;
 
@@ -105,6 +105,19 @@ export class JWBot {
         await this.send(caption);
     }
 
+    private async sendArticle(article: Article): Promise<void> {
+        const caption = formatArticle(article, this.strings);
+        const thumbnailUrl = getArticleThumbnail(article);
+        if (thumbnailUrl) {
+            try {
+                await this.sendWithImage(thumbnailUrl, caption);
+                return;
+            }
+            catch { /* fall through to text-only */ }
+        }
+        await this.send(caption);
+    }
+
     private async checkVideos(): Promise<void> {
         try {
             const data = await fetchLatestVideos(this.channel.langcode);
@@ -186,7 +199,7 @@ export class JWBot {
                 if (this.state.hasPushed(ContentType.Article, article)) {
                     continue;
                 }
-                await this.send(formatArticle(article, this.strings));
+                await this.sendArticle(article);
                 this.state.markPushed(ContentType.Article, article);
                 this.logger.log(`Sent article: ${article.title}`);
             }

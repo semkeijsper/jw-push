@@ -59,6 +59,7 @@ export type Article = {
     guid: string;
     title: string;
     link: string;
+    imageUrl?: string;
 };
 
 export enum ContentType {
