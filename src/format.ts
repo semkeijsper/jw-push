@@ -16,6 +16,19 @@ function htmlToWhatsApp(html: string): string {
         .trim();
 }
 
+// Strips all HTML tags without converting any to WhatsApp syntax.
+// Used for alert titles so that <strong> tags don't produce double-bold
+// markers when boldBeforePipe is applied afterwards.
+function stripHtml(html: string): string {
+    return html
+        .replace(/<[^>]+>/g, "")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&nbsp;/g, " ")
+        .trim();
+}
+
 function boldBeforePipe(text: string): string {
     const match = /^([^|]+?)\s*\|\s*(.+)$/.exec(text);
     return match !== null ? `*${match[1]}* | ${match[2]}` : `*${text}*`;
@@ -36,8 +49,12 @@ export function formatArticle(article: Article, strings: Strings): string {
     return `📜 _${strings.newArticle}_\n\n${boldBeforePipe(article.title)}\n\n${article.link}`;
 }
 
+export function getArticleThumbnail(article: Article): string | undefined {
+    return article.imageUrl;
+}
+
 export function formatAlert(alert: Alert, strings: Strings): string {
-    const title = htmlToWhatsApp(alert.title);
+    const title = boldBeforePipe(stripHtml(alert.title));
     const body = htmlToWhatsApp(alert.body);
-    return `🔔 ${boldBeforePipe(title)}\n\n${body}\n\n_${strings.moreInfo}_`;
+    return `🔔 ${title}\n\n${body}\n\n_${strings.moreInfo}_`;
 }

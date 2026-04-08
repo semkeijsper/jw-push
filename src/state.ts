@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { ContentType, type ContentTypeMap } from "./types.js";
+import { ContentType, type ContentTypeMap, type Article } from "./types.js";
 
 export { ContentType };
 
@@ -38,12 +38,21 @@ export class BotState {
     }
 
     hasPushed<T extends ContentType>(type: T, item: ContentTypeMap[T]): boolean {
-        return this.setFor(type).has(item.guid);
+        return this.setFor(type).has(this.itemKey(type, item));
     }
 
     markPushed<T extends ContentType>(type: T, item: ContentTypeMap[T]): void {
-        this.setFor(type).add(item.guid);
+        this.setFor(type).add(this.itemKey(type, item));
         this.persist();
+    }
+
+    // Articles are deduplicated by link because the same article can be
+    // re-published in the RSS feed with a different GUID.
+    private itemKey<T extends ContentType>(type: T, item: ContentTypeMap[T]): string {
+        if (type === ContentType.Article) {
+            return (item as Article).link;
+        }
+        return item.guid;
     }
 
     getUnivAlertMessageId(guid: string): string | undefined {

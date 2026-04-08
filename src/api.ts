@@ -55,6 +55,17 @@ export async function fetchAlerts(language: string): Promise<AlertsInfoResponse 
     return JSON.parse(text) as AlertsInfoResponse;
 }
 
+function extractArticleImageUrl(content: string | undefined): string | undefined {
+    if (!content) {
+        return undefined;
+    }
+    const match = /<img[^>]+src="([^"]+)"/.exec(content);
+    if (!match) {
+        return undefined;
+    }
+    return match[1].replace("sqs_sm", "lsr_xl");
+}
+
 export async function fetchArticles(feedUrl: string): Promise<Article[]> {
     try {
         const feed = await rssParser.parseURL(feedUrl);
@@ -64,6 +75,7 @@ export async function fetchArticles(feedUrl: string): Promise<Article[]> {
                 guid: item.guid!,
                 title: item.title!,
                 link: item.link!,
+                imageUrl: extractArticleImageUrl(item.content),
             }));
     }
     catch {
