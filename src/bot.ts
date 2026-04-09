@@ -14,6 +14,9 @@ export class JWBot {
     private logger: Logger;
     private categoryCache = new Map<string, string>();
     private univAlertMessages = new Map<string, Message>(); // in-memory guid -> Message
+    private checkingVideos = false;
+    private checkingArticles = false;
+    private checkingAlerts = false;
 
     constructor(
         private client: Client,
@@ -119,6 +122,10 @@ export class JWBot {
     }
 
     private async checkVideos(): Promise<void> {
+        if (this.checkingVideos) {
+            return;
+        }
+        this.checkingVideos = true;
         try {
             const data = await fetchLatestVideos(this.channel.langcode);
             if (!data?.category?.media) {
@@ -133,11 +140,14 @@ export class JWBot {
                 const categoryName = await this.getCategoryName(video.primaryCategory);
                 await this.sendVideo(video, categoryName);
                 this.state.markPushed(ContentType.Video, video);
-                this.logger.log(`Sent video: ${video.title}`);
+                this.logger.log(`Sent video [${video.guid}]: ${video.title}`);
             }
         }
         catch (e) {
             this.logger.error("Error in checkVideos:", e);
+        }
+        finally {
+            this.checkingVideos = false;
         }
     }
 
@@ -177,6 +187,10 @@ export class JWBot {
     }
 
     private async checkAlerts(): Promise<void> {
+        if (this.checkingAlerts) {
+            return;
+        }
+        this.checkingAlerts = true;
         try {
             const data = await fetchAlerts(this.channel.langcode);
             if (!data?.alerts) {
@@ -190,9 +204,16 @@ export class JWBot {
         catch (e) {
             this.logger.error("Error in checkAlerts:", e);
         }
+        finally {
+            this.checkingAlerts = false;
+        }
     }
 
     private async checkArticles(): Promise<void> {
+        if (this.checkingArticles) {
+            return;
+        }
+        this.checkingArticles = true;
         try {
             const articles = await fetchArticles(this.channel.articleFeedUrl);
             for (const article of [...articles].reverse()) {
@@ -201,11 +222,14 @@ export class JWBot {
                 }
                 await this.sendArticle(article);
                 this.state.markPushed(ContentType.Article, article);
-                this.logger.log(`Sent article: ${article.title}`);
+                this.logger.log(`Sent article [${article.guid}]: ${article.title}`);
             }
         }
         catch (e) {
             this.logger.error("Error in checkArticles:", e);
+        }
+        finally {
+            this.checkingArticles = false;
         }
     }
 
