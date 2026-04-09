@@ -34,13 +34,17 @@ function boldBeforePipe(text: string): string {
     return match !== null ? `*${match[1]}* | ${match[2]}` : `*${text}*`;
 }
 
+export function getVideoUrl(video: Video, locale: string): string {
+    return `https://www.jw.org/finder?locale=${locale}&lank=${video.languageAgnosticNaturalKey}`;
+}
+
 export function getVideoThumbnail(video: Video): string | undefined {
     const { lsr, lss, wss, sqr } = video.images ?? {};
     return lsr?.xl ?? lss?.lg ?? wss?.lg ?? sqr?.lg;
 }
 
 export function formatVideo(video: Video, categoryName: string, strings: Strings, locale: string): string {
-    const url = `https://www.jw.org/finder?locale=${locale}&lank=${video.languageAgnosticNaturalKey}`;
+    const url = getVideoUrl(video, locale);
     const duration = video.durationFormattedHHMM ? ` (${video.durationFormattedHHMM})` : "";
     return `🎬 _${strings.newVideo}${duration}_\n\n*${categoryName.toLocaleUpperCase(locale)}* | ${video.title}\n\n${url}`;
 }

@@ -5,7 +5,7 @@ import { BotState } from "./state.js";
 import { ContentType, type Alert, type Video, type Article, type ChannelConfig } from "./types.js";
 import { type Strings } from "./i18n.js";
 import { createLogger, type Logger } from "./logger.js";
-import { formatVideo, formatAlert, formatArticle, getVideoThumbnail, getArticleThumbnail } from "./format.js";
+import { formatVideo, formatAlert, formatArticle, getVideoUrl, getVideoThumbnail, getArticleThumbnail } from "./format.js";
 
 const { MessageMedia } = Whatsapp;
 
@@ -140,8 +140,7 @@ export class JWBot {
                 const categoryName = await this.getCategoryName(video.primaryCategory);
                 await this.sendVideo(video, categoryName);
                 this.state.markPushed(ContentType.Video, video);
-                const videoUrl = `https://www.jw.org/finder?locale=${this.channel.locale}&lank=${video.languageAgnosticNaturalKey}`;
-                this.logger.log(`Sent video: ${video.title} | ${video.guid} | ${videoUrl}`);
+                this.logger.log(`Sent video: ${video.title} | ${video.guid} | ${getVideoUrl(video, this.channel.locale)}`);
             }
         }
         catch (e) {
