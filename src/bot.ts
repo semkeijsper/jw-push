@@ -140,7 +140,8 @@ export class JWBot {
                 const categoryName = await this.getCategoryName(video.primaryCategory);
                 await this.sendVideo(video, categoryName);
                 this.state.markPushed(ContentType.Video, video);
-                this.logger.log(`Sent video [${video.guid}]: ${video.title}`);
+                const videoUrl = `https://www.jw.org/finder?locale=${this.channel.locale}&lank=${video.languageAgnosticNaturalKey}`;
+                this.logger.log(`Sent video: ${video.title} | ${video.guid} | ${videoUrl}`);
             }
         }
         catch (e) {
@@ -169,7 +170,7 @@ export class JWBot {
             }
             this.univAlertMessages.delete(alert.guid);
             this.state.deleteUnivAlert(alert.guid);
-            this.logger.log(`Updated alert ${alert.guid} (${edited ? "edited" : "replaced"})`);
+            this.logger.log(`Updated alert: ${alert.title} | ${alert.guid} (${edited ? "edited" : "replaced"})`);
             return;
         }
 
@@ -182,7 +183,7 @@ export class JWBot {
                 this.state.setUnivAlert(alert.guid, msg.id._serialized);
             }
 
-            this.logger.log(`Sent alert ${alert.guid} (lang: ${alert.languageCode})`);
+            this.logger.log(`Sent alert: ${alert.title} | ${alert.guid} (lang: ${alert.languageCode})`);
         }
     }
 
@@ -222,7 +223,7 @@ export class JWBot {
                 }
                 await this.sendArticle(article);
                 this.state.markPushed(ContentType.Article, article);
-                this.logger.log(`Sent article [${article.guid}]: ${article.title}`);
+                this.logger.log(`Sent article: ${article.title} | ${article.guid} | ${article.link}`);
             }
         }
         catch (e) {
