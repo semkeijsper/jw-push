@@ -27,6 +27,10 @@ export class JWBot {
         this.logger = createLogger(channel.name);
     }
 
+    private sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     private async send(text: string): Promise<Message> {
         return await this.client.sendMessage(this.channel.id, text, { sendSeen: false });
     }
@@ -141,6 +145,7 @@ export class JWBot {
                 await this.sendVideo(video, categoryName);
                 this.state.markPushed(ContentType.Video, video);
                 this.logger.log(`Sent video: ${video.title} | ${video.guid} | ${getVideoUrl(video, this.channel.locale)}`);
+                await this.sleep(2000);
             }
         }
         catch (e) {
@@ -151,7 +156,7 @@ export class JWBot {
         }
     }
 
-    private async handleAlert(alert: Alert): Promise<void> {
+    private async handleAlert(alert: Alert): Promise<boolean> {
         const existingMsgId = this.state.getUnivAlertMessageId(alert.guid);
 
         if (existingMsgId && alert.languageCode !== "univ") {
@@ -170,7 +175,7 @@ export class JWBot {
             this.univAlertMessages.delete(alert.guid);
             this.state.deleteUnivAlert(alert.guid);
             this.logger.log(`Updated alert: ${alert.title} | ${alert.guid} (${edited ? "edited" : "replaced"})`);
-            return;
+            return true;
         }
 
         if (!this.state.hasPushed(ContentType.Alert, alert)) {
@@ -183,7 +188,10 @@ export class JWBot {
             }
 
             this.logger.log(`Sent alert: ${alert.title} | ${alert.guid} (lang: ${alert.languageCode})`);
+            return true;
         }
+
+        return false;
     }
 
     private async checkAlerts(): Promise<void> {
@@ -198,7 +206,10 @@ export class JWBot {
             }
 
             for (const alert of [...data.alerts].reverse()) {
-                await this.handleAlert(alert);
+                const sent = await this.handleAlert(alert);
+                if (sent) {
+                    await this.sleep(2000);
+                }
             }
         }
         catch (e) {
@@ -223,6 +234,7 @@ export class JWBot {
                 await this.sendArticle(article);
                 this.state.markPushed(ContentType.Article, article);
                 this.logger.log(`Sent article: ${article.title} | ${article.guid} | ${article.link}`);
+                await this.sleep(2000);
             }
         }
         catch (e) {
