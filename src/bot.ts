@@ -175,7 +175,7 @@ export class JWBot {
             this.univAlertMessages.delete(alert.guid);
             this.state.deleteUnivAlert(alert.guid);
             this.logger.log(`Updated alert: ${alert.title} | ${alert.guid} (${edited ? "edited" : "replaced"})`);
-            return true;
+            return !edited;
         }
 
         if (!this.state.hasPushed(ContentType.Alert, alert)) {
