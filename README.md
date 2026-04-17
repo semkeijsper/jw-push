@@ -52,6 +52,8 @@ A WhatsApp Channel bot that monitors [JW.ORG](https://www.jw.org) and automatica
    ```
    On first launch, a QR code will appear in the terminal. Scan it with the WhatsApp account that owns the channel. The session is saved locally and the QR code will not appear again on subsequent runs.
 
+   > **First run tip:** if your channel already has many subscribers, run `pnpm start --baseline` first so the bot silently marks all existing content as already sent before it starts polling. Without `--baseline`, the bot will immediately broadcast all current JW.ORG content to your channel.
+
 ## Usage
 
 ```bash
@@ -107,8 +109,11 @@ src/
   types.ts      — TypeScript types for API responses and channel config
   i18n.ts       — Localized strings per locale
   logger.ts     — Channel-prefixed logging utility
+dist/             — Compiled JS output (git-ignored)
 run/
   {channelId}.json  — Per-channel runtime state (git-ignored)
+.wwebjs_auth/     — WhatsApp session (git-ignored, persists login across restarts)
+.wwebjs_cache/    — WhatsApp/Puppeteer browser cache (git-ignored)
 ```
 
 ## Development
@@ -123,16 +128,29 @@ pnpm dev --force
 # Establish baseline without sending
 pnpm dev --baseline
 
-# Type-check without emitting
+# Compile TypeScript to dist/
 pnpm build
 
 # Lint
 pnpm lint
 ```
 
-The dev server uses [tsx](https://github.com/privatenumber/tsx) to run TypeScript directly. WhatsApp session data is stored in `.wwebjs_auth/` and persists between runs — delete this folder to force a new QR scan.
+The dev server uses [tsx](https://github.com/privatenumber/tsx) to run TypeScript directly. WhatsApp session data is stored in `.wwebjs_auth/` and persists between runs — delete this folder to force a new QR scan. Puppeteer browser cache is stored in `.wwebjs_cache/`.
 
 Per-channel state is stored in `run/{channelId}.json`. Delete a channel's state file to reset its sent-item tracking. On next start without `--baseline`, the channel will be filled with current content.
+
+## Adding a new language
+
+1. Open `src/i18n.ts` and add a new entry to the `strings` map with your locale key:
+   ```typescript
+   "de": {
+       newVideo: "Neues Video!",
+       newArticle: "Neuer Artikel!",
+       moreInfo: ">> Weitere Informationen auf jw.org/de <<",
+   },
+   ```
+2. Add a matching channel entry in `config.json` using that locale, the correct `langcode`, and the RSS feed URL for the language.
+3. The bot will automatically pick up the new locale. If no entry exists for a locale, it falls back to English.
 
 ---
 
