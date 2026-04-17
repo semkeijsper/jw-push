@@ -210,10 +210,14 @@ describe("formatAlert", () => {
 
     it("decodes HTML entities in the body", () => {
         const alert: Alert = {
-            guid: "g", languageCode: "E", title: "t", body: "Tom &amp; Jerry says &lt;3 and &gt; everything&nbsp;else", type: "news",
+            guid: "g",
+            languageCode: "E",
+            title: "t",
+            body: "Visit the&nbsp;branch office &amp; read more at jw.org &lt;section&gt;",
+            type: "news",
         };
         const out = formatAlert(alert, strings);
-        expect(out).toContain("Tom & Jerry says <3 and > everything else");
+        expect(out).toContain("Visit the branch office & read more at jw.org <section>");
     });
 
     it("collapses 3+ consecutive newlines into exactly 2", () => {
