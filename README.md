@@ -98,9 +98,9 @@ pnpm start --linux
 | `name` | Human-readable label shown in console output |
 | `langcode` | JW.ORG internal language code (e.g. `E` for English, `O` for Dutch). |
 | `locale` | Locale used in URLs and message formatting (e.g. `en`, `nl`). |
+| `articleFeedUrl` | RSS feed URL for the JW.ORG 'What's New?' section in this language. To find it, open [jw.org](https://www.jw.org) in the target language, navigate to the 'What's New?' section, and click the RSS button in the top-right corner (visible on desktop only). |
 
 Both `langcode` and `locale` can be found on [jw.org/en/languages](https://www.jw.org/en/languages) — they must match the same language. `langcode` is the short uppercase abbreviation listed under each language; `locale` is the lowercase language tag next to it.
-| `articleFeedUrl` | RSS feed URL for the JW.ORG 'What's New?' section in this language. To find it, open [jw.org](https://www.jw.org) in the target language, navigate to the 'What's New?' section, and click the RSS button in the top-right corner (visible on desktop only). |
 
 ## Project structure
 
