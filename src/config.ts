@@ -9,8 +9,11 @@ function load(): Config {
     try {
         return JSON.parse(readFileSync("config.json", "utf-8")) as Config;
     }
-    catch {
-        throw new Error("Failed to load config.json — make sure it exists and is valid JSON (see config.example.json).");
+    catch (err) {
+        if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+            return { channels: [] };
+        }
+        throw new Error("Failed to parse config.json — make sure it is valid JSON (see config.example.json).", { cause: err });
     }
 }
 
