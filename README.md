@@ -60,6 +60,9 @@ A WhatsApp Channel bot that monitors [JW.ORG](https://www.jw.org) and automatica
 # Start normally
 pnpm start
 
+# List all WhatsApp Channels visible to this account (prints names and IDs, then exits)
+pnpm start --list-channels
+
 # Establish a silent baseline without sending anything (useful after losing state or migrating hosts)
 pnpm start --baseline
 
@@ -76,6 +79,7 @@ pnpm start --linux
 |---|---|---|
 | **Normal — new channel** | No state file | Polls immediately and fills the channel with all current content |
 | **Normal — existing state** | State file present | Resumes from saved state, only sends new content |
+| **`--list-channels`** | Flag, or no channels in config | Prints the name and ID of every WhatsApp Channel visible to this account, then exits. Also triggers automatically when `config.json` has no channels configured |
 | **`--baseline`** | Flag, all channels | Silently marks all current content as already sent, then polls normally. Use when migrating to a new host or after losing the state file |
 | **`--force`** | Flag, `type: "development"` channels only | Clears in-memory state and resends all current content. Useful for testing message formatting |
 
@@ -89,12 +93,12 @@ pnpm start --linux
 
 | Field | Description |
 |---|---|
-| `id` | WhatsApp Channel ID in the format `{id}@newsletter` |
+| `id` | WhatsApp Channel ID in the format `{id}@newsletter`. Run `pnpm start --list-channels` to print all channel IDs for the logged-in account. |
 | `type` | `"production"` or `"development"` |
 | `name` | Human-readable label shown in console output |
-| `langcode` | JW.ORG language code (e.g. `E` for English, `O` for Dutch) |
+| `langcode` | JW.ORG internal language code (e.g. `E` for English, `O` for Dutch). Find the code for your language at [jw.org/en/languages](https://www.jw.org/en/languages) — it is listed under each language as a short uppercase abbreviation. |
 | `locale` | Locale used in URLs and message formatting (e.g. `en`, `nl`) |
-| `articleFeedUrl` | URL of the JW.ORG 'What's New?' RSS feed for this language |
+| `articleFeedUrl` | RSS feed URL for the JW.ORG 'What's New?' section in this language. To find it, open [jw.org](https://www.jw.org) in the target language, navigate to the 'What's New?' section, and click the RSS button in the top-right corner (visible on desktop only). |
 
 ## Project structure
 

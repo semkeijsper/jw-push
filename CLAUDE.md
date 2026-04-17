@@ -25,6 +25,7 @@ pnpm lint             # ESLint on src/
 ```
 
 **CLI flags** passed to `node`/`tsx`:
+- `--list-channels` — Print all WhatsApp Channel IDs visible to the logged-in account, then exit. Also triggers automatically when `config.json` has no channels configured (or is absent).
 - `--baseline` — Mark all current JW.ORG content as already sent (no messages sent). Use on first run to avoid flooding channels.
 - `--force` — Clear state and resend all content. Only affects `development` channels.
 - `--linux` — Use `/usr/bin/chromium` instead of bundled Chromium (for Linux servers).
