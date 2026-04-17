@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { MockInstance } from "vitest";
-import { createLogger } from "./logger.js";
+import { createLogger } from "../src/logger.js";
 
 describe("createLogger", () => {
     let logSpy: MockInstance<typeof console.log>;

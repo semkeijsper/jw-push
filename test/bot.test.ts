@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Mock } from "vitest";
-import { ContentType, type Alert, type Article, type Video, type ChannelConfig } from "./types.js";
-import type { Strings } from "./i18n.js";
+import { ContentType, type Alert, type Article, type Video, type ChannelConfig } from "../src/types.js";
+import type { Strings } from "../src/i18n.js";
 
 // ---------- Mocks ----------
 
-vi.mock("./api.js", () => ({
+vi.mock("../src/api.js", () => ({
     fetchLatestVideos: vi.fn(),
     fetchAlerts: vi.fn(),
     fetchArticles: vi.fn(),
@@ -33,8 +33,8 @@ type StateStub = {
 
 const stateInstances: StateStub[] = [];
 
-vi.mock("./state.js", async () => {
-    const types = await import("./types.js");
+vi.mock("../src/state.js", async () => {
+    const types = await import("../src/types.js");
     class BotState implements StateStub {
         hasPushed = vi.fn().mockReturnValue(false);
         markPushed = vi.fn();
@@ -52,9 +52,9 @@ vi.mock("./state.js", async () => {
 });
 
 // Imported after mocks are declared above.
-const api = await import("./api.js");
+const api = await import("../src/api.js");
 const whatsapp = await import("whatsapp-web.js");
-const { JWBot } = await import("./bot.js");
+const { JWBot } = await import("../src/bot.js");
 
 // ---------- Test helpers ----------
 

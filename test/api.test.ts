@@ -9,7 +9,7 @@ vi.mock("rss-parser", () => ({
 }));
 
 // Import after mocks are set up.
-const { fetchLatestVideos, fetchAlerts, fetchArticles, fetchCategoryName } = await import("./api.js");
+const { fetchLatestVideos, fetchAlerts, fetchArticles, fetchCategoryName } = await import("../src/api.js");
 
 function mockFetchOnce(body: string, init: { status?: number; ok?: boolean } = {}): void {
     const status = init.status ?? 200;

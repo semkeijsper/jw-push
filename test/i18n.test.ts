@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getStrings } from "./i18n.js";
+import { getStrings } from "../src/i18n.js";
 
 describe("getStrings", () => {
     it("returns English strings for 'en' locale", () => {

@@ -6,9 +6,9 @@ import {
     formatVideo,
     formatArticle,
     formatAlert,
-} from "./format.js";
-import type { Video, Alert, Article } from "./types.js";
-import type { Strings } from "./i18n.js";
+} from "../src/format.js";
+import type { Video, Alert, Article } from "../src/types.js";
+import type { Strings } from "../src/i18n.js";
 
 const strings: Strings = {
     newVideo: "New video!",

@@ -6,9 +6,9 @@ vi.mock("node:fs", () => ({
     readFileSync: (...args: unknown[]) => readFileSync(...args) as unknown,
 }));
 
-async function loadConfig(): Promise<typeof import("./config.js")> {
+async function loadConfig(): Promise<typeof import("../src/config.js")> {
     vi.resetModules();
-    return await import("./config.js");
+    return await import("../src/config.js");
 }
 
 describe("config loader", () => {

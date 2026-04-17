@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ContentType } from "./types.js";
-import type { Video, Alert, Article } from "./types.js";
+import { ContentType } from "../src/types.js";
+import type { Video, Alert, Article } from "../src/types.js";
 
 // In-memory stub for node:fs used by state.ts. Each test gets a fresh store.
 const store = new Map<string, string>();
@@ -23,7 +23,7 @@ vi.mock("node:fs", () => ({
 }));
 
 // Import AFTER the mock so state.ts picks up the mocked fs.
-const { BotState } = await import("./state.js");
+const { BotState } = await import("../src/state.js");
 
 const video = (guid: string): Video => ({
     guid,
