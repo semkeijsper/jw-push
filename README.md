@@ -96,8 +96,10 @@ pnpm start --linux
 | `id` | WhatsApp Channel ID in the format `{id}@newsletter`. Run `pnpm start --list-channels` to print all channel IDs for the logged-in account. |
 | `type` | `"production"` or `"development"` |
 | `name` | Human-readable label shown in console output |
-| `langcode` | JW.ORG internal language code (e.g. `E` for English, `O` for Dutch). Find the code for your language at [jw.org/en/languages](https://www.jw.org/en/languages) — it is listed under each language as a short uppercase abbreviation. |
-| `locale` | Locale used in URLs and message formatting (e.g. `en`, `nl`) |
+| `langcode` | JW.ORG internal language code (e.g. `E` for English, `O` for Dutch). |
+| `locale` | Locale used in URLs and message formatting (e.g. `en`, `nl`). |
+
+Both `langcode` and `locale` can be found on [jw.org/en/languages](https://www.jw.org/en/languages) — they must match the same language. `langcode` is the short uppercase abbreviation listed under each language; `locale` is the lowercase language tag next to it.
 | `articleFeedUrl` | RSS feed URL for the JW.ORG 'What's New?' section in this language. To find it, open [jw.org](https://www.jw.org) in the target language, navigate to the 'What's New?' section, and click the RSS button in the top-right corner (visible on desktop only). |
 
 ## Project structure
