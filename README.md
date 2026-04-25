@@ -1,21 +1,19 @@
 # JW Push
 
-A bot that monitors [JW.ORG](https://www.jw.org) and broadcasts new content to one or more WhatsApp Channels, each with its own language and locale.
+A bot that monitors [JW.ORG](https://www.jw.org) and broadcasts new content to one or more WhatsApp channels.
 
 ## Features
 
-- 🎬 **Latest videos** — polls for new videos with thumbnail image
+- 🎬 **Latest videos** — polls for new videos
 - 📜 **New articles** — polls the JW.ORG 'What's New?' RSS feed
-- 🔔 **Alerts & announcements** — polls for breaking news alerts; edits placeholder alerts in-place when the localized version arrives
+- 🔔 **Alerts & announcements** — polls for breaking news alerts; edits placeholder alerts when the localized version arrives
 - 🔁 **Deduplication** — tracks sent items per content type across restarts so nothing is sent twice
 - 🗂️ **Persistent state** — saves state per channel to `run/`
 - 🌍 **Multi-channel & i18n** — run multiple channels simultaneously, each with their own language and locale
 
 ## How it works
 
-Every 60 seconds, the bot polls JW.ORG for new videos, articles, and alerts in each configured language. Anything new is posted to the matching WhatsApp channel; the GUID (or article link) is written to `run/{channelId}.json` so the same item is never sent twice — even after a restart.
-
-One nicety worth knowing: breaking-news alerts are sometimes published in a "universal" form before the localized version is ready. The bot sends the placeholder right away and silently edits the message in place when the translation arrives, so subscribers don't get notified twice.
+Every 60 seconds, the bot polls JW.ORG for new videos, articles, and alerts in each configured language. Anything new is posted to the matching WhatsApp channel; the unique identifier is written to `run/{channelId}.json` so the same item is never sent twice — even after a restart.
 
 ## Requirements
 
@@ -41,9 +39,9 @@ One nicety worth knowing: breaking-news alerts are sometimes published in a "uni
    ```bash
    pnpm build && pnpm start --list-channels
    ```
-   On first launch a QR code will appear in the terminal — scan it with the WhatsApp account that owns the channel. The session is saved locally, so you won't need to scan again. The bot will then print the name and ID of every channel visible to that account, and exit.
+   On first launch a QR code will appear in the terminal — scan it with the WhatsApp account that owns the channel. The bot will then print the name and ID of every channel visible to that account, and exit. This session is also saved for subsequent runs.
 
-   > This step is also triggered automatically if `config.json` has no channels configured yet.
+   > This action is also triggered automatically if `config.json` is empty.
 
 4. **Fill in `config.json`** using the IDs from the previous step. See [Configuration](#configuration) for the meaning of each field.
 
@@ -81,20 +79,20 @@ One nicety worth knowing: breaking-news alerts are sometimes published in a "uni
 | `type` | `"production"` or `"development"` — only `development` channels are affected by `--force`. |
 | `name` | Human-readable label shown in console output. |
 | `langcode` | JW.ORG internal language code (e.g. `E` for English, `O` for Dutch). |
-| `locale` | Locale used in URLs and message formatting (e.g. `en`, `nl`). |
+| `locale` | ISO 639-(1/3) language code used in URLs and message formatting (e.g. `en`, `nl`). |
 | `articleFeedUrl` | RSS feed URL for the JW.ORG 'What's New?' section in this language. To find it, open [jw.org](https://www.jw.org) in the target language, navigate to the 'What's New?' section, and click the RSS button in the top-right corner (visible on desktop only). |
 
-Both `langcode` and `locale` can be found on [jw.org/en/languages](https://www.jw.org/en/languages) — they must match the same language. `langcode` is the short uppercase abbreviation listed under each language; `locale` is the lowercase language tag next to it.
+Both `langcode` and `locale` for each language can be found on [jw.org/en/languages](https://www.jw.org/en/languages). `langcode` is the short uppercase abbreviation listed under each language; `locale` is the lowercase language tag found under `symbol`.
 
 ## CLI flags
 
-Flags work with both `pnpm start` and `pnpm dev`.
+The flags listed below work with both `pnpm start` and `pnpm dev`.
 
 | Flag | Behavior |
 |---|---|
-| `--list-channels` | Prints the name and ID of every WhatsApp channel visible to this account, then exits. Triggers automatically when `config.json` has no channels configured. |
+| `--list-channels` | Prints the name and ID of every WhatsApp channel visible to this account, then exits. Triggers automatically when `config.json` is empty. |
 | `--baseline` | Silently marks all current JW.ORG content as already sent without broadcasting anything, then resumes polling normally. Use on a brand-new channel that already has subscribers, or after migrating to a new host. |
-| `--force` | Clears in-memory state and resends all current content. Only affects `type: "development"` channels — silently ignored on production. Useful for testing message formatting. |
+| `--force` | Clears in-memory state and resends all current content. Only affects `type: "development"` channels — silently ignored on production. Useful for testing message sending and formatting. |
 | `--linux` | Use `/usr/bin/chromium` instead of bundled Chromium (for Linux servers like Raspberry Pi or Ubuntu). |
 
 ## Development
