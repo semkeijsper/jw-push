@@ -45,6 +45,11 @@ export type Images = {
 
 export type AlertsInfoResponse = {
     alerts: Alert[];
+    pagination: {
+        totalCount: number;
+        offset: number;
+        limit: number;
+    };
 };
 
 export type Alert = {

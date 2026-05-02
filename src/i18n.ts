@@ -8,12 +8,12 @@ const i18n: Record<string, Strings> = {
     nl: {
         newVideo: "Nieuwe video!",
         newArticle: "Nieuw artikel!",
-        moreInfo: ">> Meer informatie op jw.org/nl <<",
+        moreInfo: ">> Meer informatie op jw.org/nl/nieuws <<",
     },
     en: {
         newVideo: "New video!",
         newArticle: "New article!",
-        moreInfo: ">> More information at jw.org/en <<",
+        moreInfo: ">> More information at jw.org/en/news <<",
     },
 };
 

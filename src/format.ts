@@ -6,12 +6,14 @@ function htmlToWhatsApp(html: string): string {
         .replace(/<strong>(.*?)<\/strong>/gis, "*$1*")
         .replace(/<em>(.*?)<\/em>/gis, "_$1_")
         .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
         .replace(/<\/p>/gi, "\n")
         .replace(/<[^>]+>/g, "")
         .replace(/&amp;/g, "&")
         .replace(/&lt;/g, "<")
         .replace(/&gt;/g, ">")
         .replace(/&nbsp;/g, " ")
+        .replace(/[ \t]*\n[ \t]*/g, "\n")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
 }

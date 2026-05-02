@@ -45,7 +45,7 @@ export async function fetchLatestVideos(language: string): Promise<LatestVideosR
 
 export async function fetchAlerts(language: string): Promise<AlertsInfoResponse | null> {
     const token = await fetchJwt();
-    const url = `${BASE_URL}/alerts/list?type=news&lang=${language}`;
+    const url = `${BASE_URL}/alerts/list?type=news&lang=${language}&context=newsroom`;
     const text = await fetchWithRetry(url, {
         headers: { "Authorization": `Bearer ${token}` },
     });
