@@ -122,6 +122,25 @@ describe("BotState", () => {
             expect(s.hasPushed(ContentType.Article, article("guid-A", "https://x/2"))).toBe(false);
         });
 
+        it("ignores a trailing slash when comparing article links", () => {
+            const s = new BotState("ch1");
+            s.markPushed(ContentType.Article, article("guid-A", "https://x/article-1"));
+            expect(s.hasPushed(ContentType.Article, article("guid-B", "https://x/article-1/"))).toBe(true);
+        });
+
+        it("ignores query string and fragment noise when comparing article links", () => {
+            const s = new BotState("ch1");
+            s.markPushed(ContentType.Article, article("guid-A", "https://x/article-1"));
+            expect(s.hasPushed(ContentType.Article, article("guid-B", "https://x/article-1?utm_source=feed"))).toBe(true);
+            expect(s.hasPushed(ContentType.Article, article("guid-C", "https://x/article-1#section"))).toBe(true);
+        });
+
+        it("falls back to the raw (trimmed) link when it is not a valid URL", () => {
+            const s = new BotState("ch1");
+            s.markPushed(ContentType.Article, article("guid-A", "not-a-url"));
+            expect(s.hasPushed(ContentType.Article, article("guid-B", " not-a-url "))).toBe(true);
+        });
+
         it("persists after every markPushed call", async () => {
             const fs = await import("node:fs");
             const s = new BotState("ch1");

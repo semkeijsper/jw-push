@@ -23,8 +23,17 @@ const listMode = args.has("--list-channels") || channels.length === 0;
 const force = args.has("--force");
 const baseline = args.has("--baseline");
 
+// whatsapp-web.js can emit "ready" again after a reconnect; guard against
+// spawning a second set of bots for the same channels.
+let started = false;
+
 client.on("ready", () => {
     console.log("WhatsApp client ready.");
+
+    if (started) {
+        return;
+    }
+    started = true;
 
     if (listMode) {
         void listChannels();

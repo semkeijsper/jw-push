@@ -50,9 +50,25 @@ export class BotState {
     // re-published in the RSS feed with a different GUID.
     private itemKey<T extends ContentType>(type: T, item: ContentTypeMap[T]): string {
         if (type === ContentType.Article) {
-            return (item as Article).link;
+            return BotState.normalizeLink((item as Article).link);
         }
         return item.guid;
+    }
+
+    // The RSS feed sometimes re-publishes the same article with a link that
+    // only differs by trailing slash or query/fragment noise (e.g. tracking
+    // params). Normalizing avoids treating that as a brand-new article.
+    private static normalizeLink(link: string): string {
+        try {
+            const url = new URL(link.trim());
+            url.search = "";
+            url.hash = "";
+            const path = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, "") : url.pathname;
+            return `${url.origin}${path}`;
+        }
+        catch {
+            return link.trim();
+        }
     }
 
     getUnivAlertMessageId(guid: string): string | undefined {
