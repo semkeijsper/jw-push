@@ -74,7 +74,8 @@ const strings: Strings = {
 };
 
 function makeClient(): { client: { sendMessage: Mock }; sendMessage: Mock } {
-    const sendMessage = vi.fn();
+    // Resolve a message by default: the bot treats a falsy result as a send failure.
+    const sendMessage = vi.fn().mockImplementation(() => Promise.resolve(makeMessage("sent")));
     return { client: { sendMessage }, sendMessage };
 }
 
@@ -251,6 +252,23 @@ describe("JWBot.checkVideos", () => {
             media,
             expect.objectContaining({ caption: expect.any(String) as unknown, sendSeen: false }),
         );
+    });
+
+    it("falls back to text-only when the media send resolves without a message", async () => {
+        const { internals, sendMessage } = buildBot();
+        const v = video("v1", { images: { lsr: { xl: "https://img/x.jpg" } } });
+        vi.mocked(api.fetchLatestVideos).mockResolvedValue({
+            category: { key: "k", name: "n", media: [v] },
+        });
+        vi.mocked(api.fetchCategoryName).mockResolvedValue("Cat");
+        vi.mocked(whatsapp.default.MessageMedia.fromUrl).mockResolvedValue({ mock: "media" } as never);
+        // whatsapp-web.js returns null instead of throwing when a channel rejects the media.
+        sendMessage.mockResolvedValueOnce(null);
+
+        await internals.checkVideos();
+
+        expect(sendMessage).toHaveBeenCalledTimes(2);
+        expect(typeof (sendMessage.mock.calls[1] as unknown[])[1]).toBe("string");
     });
 
     it("skips overlapping invocations via the mutex", async () => {

@@ -37,7 +37,14 @@ export class JWBot {
 
     private async sendWithImage(imageUrl: string, caption: string): Promise<Message> {
         const media = await MessageMedia.fromUrl(imageUrl, { unsafeMime: true });
-        return await this.client.sendMessage(this.channel.id, media, { caption, sendSeen: false });
+        const message: Message | null = await this.client.sendMessage(this.channel.id, media, { caption, sendSeen: false });
+        // whatsapp-web.js resolves with null (rejected message type for a channel)
+        // or undefined (the injected send produced no message) instead of throwing.
+        // Treat that as a failure so the caller falls back to a text-only send.
+        if (!message) {
+            throw new Error("sendMessage returned no message for the media send");
+        }
+        return message;
     }
 
     async start(options?: { forceResend?: boolean; baseline?: boolean }): Promise<void> {
@@ -107,7 +114,9 @@ export class JWBot {
                 await this.sendWithImage(thumbnailUrl, caption);
                 return;
             }
-            catch { /* fall through to text-only */ }
+            catch (e) {
+                this.logger.error(`Video thumbnail send failed, falling back to text-only: ${thumbnailUrl}`, e);
+            }
         }
         await this.send(caption);
     }
@@ -120,7 +129,9 @@ export class JWBot {
                 await this.sendWithImage(thumbnailUrl, caption);
                 return;
             }
-            catch { /* fall through to text-only */ }
+            catch (e) {
+                this.logger.error(`Article image send failed, falling back to text-only: ${thumbnailUrl}`, e);
+            }
         }
         await this.send(caption);
     }
