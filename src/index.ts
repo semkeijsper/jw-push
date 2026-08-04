@@ -2,17 +2,24 @@ import Whatsapp from "whatsapp-web.js";
 const { Client, LocalAuth } = Whatsapp;
 import qrcode from "qrcode-terminal";
 
-import { channels } from "./config.js";
+import { channels, webVersion } from "./config.js";
 import { getStrings } from "./i18n.js";
 import { JWBot } from "./bot.js";
 
 const args = new Set(process.argv);
+
+if (webVersion) {
+    console.log(`Pinning WhatsApp Web to ${webVersion.version} (${webVersion.cache.type} cache).`);
+}
 
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         executablePath: args.has("--linux") ? "/usr/bin/chromium" : undefined,
     },
+    // Left unset, whatsapp-web.js boots whatever WhatsApp Web serves today: its
+    // own default webVersion is long expired, so its local cache never resolves.
+    ...(webVersion ? { webVersion: webVersion.version, webVersionCache: webVersion.cache } : {}),
 });
 
 client.on("qr", (qr) => {

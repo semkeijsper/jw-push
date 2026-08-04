@@ -36,6 +36,26 @@ describe("config loader", () => {
         expect(readFileSync).toHaveBeenCalledWith("config.json", "utf-8");
     });
 
+    it("exports webVersion when config.json pins one", async () => {
+        readFileSync.mockReturnValue(JSON.stringify({
+            channels: [],
+            webVersion: {
+                version: "2.3000.1042611748-alpha",
+                cache: { type: "remote", remotePath: "https://archive/{version}.html" },
+            },
+        }));
+
+        const { webVersion } = await loadConfig();
+        expect(webVersion?.version).toBe("2.3000.1042611748-alpha");
+        expect(webVersion?.cache).toEqual({ type: "remote", remotePath: "https://archive/{version}.html" });
+    });
+
+    it("leaves webVersion undefined when config.json does not pin one", async () => {
+        readFileSync.mockReturnValue(JSON.stringify({ channels: [] }));
+        const { webVersion } = await loadConfig();
+        expect(webVersion).toBeUndefined();
+    });
+
     it("returns an empty channels list when config.json is missing", async () => {
         readFileSync.mockImplementation(() => {
             throw Object.assign(new Error("not found"), { code: "ENOENT" });

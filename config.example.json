@@ -1,4 +1,11 @@
 {
+  "webVersion": {
+    "version": "2.3000.1042611748-alpha",
+    "cache": {
+      "type": "remote",
+      "remotePath": "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html"
+    }
+  },
   "channels": [
     {
       "id": "your_production_channel_id@newsletter",

@@ -7,6 +7,15 @@ export type ChannelConfig = {
     articleFeedUrl: string;
 };
 
+// Pins the WhatsApp Web build the bundled browser boots. whatsapp-web.js
+// intercepts the page load of web.whatsapp.com and answers it with a stored
+// index.html, so the browser pulls that build's JS chunks instead of today's.
+// Note that WhatsApp expires a build roughly two months after its release.
+export type WebVersionConfig = {
+    version: string;
+    cache: { type: "none" } | { type: "local"; path?: string } | { type: "remote"; remotePath: string };
+};
+
 export type CategoryInfoResponse = {
     category: Category;
 };

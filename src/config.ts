@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
-import type { ChannelConfig } from "./types.js";
+import type { ChannelConfig, WebVersionConfig } from "./types.js";
 
 type Config = {
     channels: ChannelConfig[];
+    webVersion?: WebVersionConfig;
 };
 
 function load(): Config {
@@ -17,4 +18,4 @@ function load(): Config {
     }
 }
 
-export const { channels } = load();
+export const { channels, webVersion } = load();
