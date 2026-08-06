@@ -9,6 +9,10 @@
 //   node scripts/probe-web-version.mjs 2.3000.1042852868-alpha ...
 //
 // Set CHROMIUM_PATH to use a system Chromium (e.g. /usr/bin/chromium on a server).
+// Set PROBE_DEBUG=1 to pass Chromium's own stdout/stderr through, which is what
+// you need if it fails to start. Stop the bot first: two Chromium instances at
+// once is more than a small board has memory for, and the second one gets
+// killed before it can report a DevTools endpoint.
 
 import { createRequire } from "node:module";
 
@@ -106,10 +110,38 @@ async function probe(browser, version) {
 
 const versions = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_VERSIONS;
 
+const executablePath = process.env.CHROMIUM_PATH || undefined;
+
+if (executablePath) {
+    // Surface a bad path or a broken binary as itself rather than as a launch
+    // timeout 30s later.
+    const { execFileSync } = await import("node:child_process");
+    try {
+        console.log(`chromium: ${execFileSync(executablePath, ["--version"], { encoding: "utf-8" }).trim()}`);
+    }
+    catch (e) {
+        console.error(`Could not run ${executablePath} --version: ${e.message}`);
+        process.exit(1);
+    }
+}
+
 const browser = await puppeteer.launch({
-    executablePath: process.env.CHROMIUM_PATH || undefined,
+    executablePath,
     headless: true,
-    args: ["--no-sandbox", "--disable-dev-shm-usage"],
+    // A Raspberry Pi can take well over the 30s default to bring up Chromium,
+    // especially cold or while the bot is holding a browser of its own.
+    timeout: 180_000,
+    protocolTimeout: 180_000,
+    dumpio: process.env.PROBE_DEBUG === "1",
+    args: [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-extensions",
+        "--no-first-run",
+        "--no-zygote",
+    ],
 });
 
 const results = {};
